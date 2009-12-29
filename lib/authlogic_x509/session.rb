@@ -35,6 +35,7 @@ module AuthlogicX509
         klass.class_eval do
           attr_accessor :x509_login
           attr_accessor :x509_subject_dn
+          attr_accessor :request_env
           validate :validate_by_x509, :if => :authenticating_with_x509?
         end
       end
@@ -46,6 +47,7 @@ module AuthlogicX509
         hash = values.first.is_a?(Hash) ? values.first.with_indifferent_access : nil
         if !hash.nil?
           self.x509_login = hash[:x509_login] if hash.key?(:x509_login)
+          self.request_env = hash[:request_env] if hash.key?(:request_env)
         end
       end
       
@@ -71,12 +73,12 @@ module AuthlogicX509
   			def get_subject_dn
   			  if controller.local_request? 
   			    self.x509_subject_dn = "/CN=Local Request"
-  			  elsif controller.request.env['SSL_CLIENT_S_DN'] =~ /CN/
-  			    self.x509_subject_dn = controller.request.env['SSL_CLIENT_S_DN']
-  			  elsif controller.request.env['REDIRECT_SSL_CLIENT_S_DN'] =~ /CN/
-  			    self.x509_subject_dn = controller.request.env['REDIRECT_SSL_CLIENT_S_DN']
-  			  elsif controller.request.env['HTTP_REDIRECT_SSL_CLIENT_S_DN'] =~ /CN/
-  			    self.x509_subject_dn = controller.request.env['HTTP_REDIRECT_SSL_CLIENT_S_DN']
+  			  elsif request_env['SSL_CLIENT_S_DN'] =~ /CN/
+  			    self.x509_subject_dn = request_env['SSL_CLIENT_S_DN']
+  			  elsif request_env['REDIRECT_SSL_CLIENT_S_DN'] =~ /CN/
+  			    self.x509_subject_dn = request_env['REDIRECT_SSL_CLIENT_S_DN']
+  			  elsif request_env['HTTP_REDIRECT_SSL_CLIENT_S_DN'] =~ /CN/
+  			    self.x509_subject_dn = request_env['HTTP_REDIRECT_SSL_CLIENT_S_DN']
   			  end
   			end			    
     end
