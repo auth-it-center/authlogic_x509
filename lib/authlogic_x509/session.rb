@@ -55,19 +55,9 @@ module AuthlogicX509
         end
 
         def validate_by_x509
-
-          if controller.local_request? 
-            self.x509_subject_dn = "/CN=Local Request"
-          elsif controller.request.env['SSL_CLIENT_S_DN'] =~ /CN/
-            self.x509_subject_dn = controller.request.env['SSL_CLIENT_S_DN']
-          elsif controller.request.env['REDIRECT_SSL_CLIENT_S_DN'] =~ /CN/
-            self.x509_subject_dn = controller.request.env['REDIRECT_SSL_CLIENT_S_DN']
-          elsif controller.request.env['HTTP_REDIRECT_SSL_CLIENT_S_DN'] =~ /CN/
-            self.x509_subject_dn = controller.request.env['HTTP_REDIRECT_SSL_CLIENT_S_DN']
-          end
-          
+          self.x509_subject_dn = get_subject_dn
           if self.x509_subject_dn
-            self.attempted_record = klass.send(find_by_x509_login_method, x509_subject_dn)
+            self.attempted_record = search_for_record(find_by_x509_login_method, x509_subject_dn)
             errors.add(:x509_subject_dn, I18n.t('error_messages.x509_subject_dn_not_found', :default => "does not exist")) if attempted_record.blank?
           else
             errors.add_to_base("Subject DN not found")
@@ -77,6 +67,18 @@ module AuthlogicX509
         def find_by_x509_login_method
   				self.class.find_by_x509_login_method
   			end
+
+  			def get_subject_dn
+  			  if controller.local_request? 
+  			    self.x509_subject_dn = "/CN=Local Request"
+  			  elsif controller.request.env['SSL_CLIENT_S_DN'] =~ /CN/
+  			    self.x509_subject_dn = controller.request.env['SSL_CLIENT_S_DN']
+  			  elsif controller.request.env['REDIRECT_SSL_CLIENT_S_DN'] =~ /CN/
+  			    self.x509_subject_dn = controller.request.env['REDIRECT_SSL_CLIENT_S_DN']
+  			  elsif controller.request.env['HTTP_REDIRECT_SSL_CLIENT_S_DN'] =~ /CN/
+  			    self.x509_subject_dn = controller.request.env['HTTP_REDIRECT_SSL_CLIENT_S_DN']
+  			  end
+  			end			    
     end
   end
 end
