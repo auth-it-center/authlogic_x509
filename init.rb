@@ -1,0 +1,1 @@
+require 'authlogic_x509'
