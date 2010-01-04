@@ -61,7 +61,7 @@ module AuthlogicX509
         hash = values.first.is_a?(Hash) ? values.first.with_indifferent_access : nil
         if !hash.nil?
           self.x509_login = hash[:x509_login] if hash.key?(:x509_login)
-          self.client_cert = hash[:x509_client_cert] if hash.key?(:x509_client_cert)
+          self.x509_client_cert = hash[:x509_client_cert] if hash.key?(:x509_client_cert)
         end
       end
       
