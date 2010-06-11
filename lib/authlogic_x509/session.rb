@@ -72,9 +72,7 @@ module AuthlogicX509
           end
           
           if self.x509_subject_dn && self.x509_issuer_dn
-            controller.logger.info "start"
             self.attempted_record = klass.send(find_by_x509_login_method, x509_subject_dn, x509_issuer_dn)
-            controller.logger.info "stop"
             errors.add(:x509_login, I18n.t('error_messages.x509_login_not_found', :default => "does not exist")) if attempted_record.blank?
           else
             errors.add_to_base("Subject DN not found")
