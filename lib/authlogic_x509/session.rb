@@ -9,6 +9,13 @@ module AuthlogicX509
     end
     
     module Config
+
+
+      def self.map_x509_login(x509_subject_dn, x509_issuer_dn)
+        dn = X509Login.where(:subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn).first || X509Login.new(:subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn)
+        dn.owner = self
+        dn.save
+      end
       # Once X509 authentication has succeeded we need to find the user in the database. By default this just calls the
       # find_by_x509_login method provided by the User class. If you have a more advanced set up and need to find users
       # differently specify your own method and define your logic in there.
@@ -17,7 +24,7 @@ module AuthlogicX509
       #
       #   class User < ActiveRecord::Base
       #     def self.find_by_x509_login(x509_subject_dn, x509_issuer_dn)
-      #       first(:conditions => ["#{X509Login.table_name}.x509_subject_dn = ? and  #{X509Login.table_name}.x509_issuer_dn = ?", login], :join => :x509_logins)
+      #       X509Login.where(:subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn).first && X509Login.where(:subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn).first.user
       #     end
       #   end
       #
@@ -36,7 +43,9 @@ module AuthlogicX509
       #
       #   class User < ActiveRecord::Base
       #     def self.map_x509_login(x509_subject_dn, x509_issuer_dn)
-      #       self.x509_logins.create(:user_id=>self.id, :subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn)
+      #       dn = X509Login.where(:subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn).first || X509Login.new(:subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn)
+      #       dn.owner = self
+      #       dn.save
       #     end
       #   end
       #

@@ -1,0 +1,47 @@
+= Authlogic x509 login
+
+Authlogic x509 is an extension of the Authlogic library to add x509 support.
+
+== Dependancies
+
+This plugin requires authlogic model based ruby authentication solution (https://github.com/binarylogic/authlogic). It also requires that the web server (i.e. Apache) will provide (controller.request.env) the x509 login information in the following variables:
+
+  SSL_CLIENT_S_DN (Subject DN)
+  SSL_CLIENT_I_DN (Issuer DN)
+
+OR
+
+  REDIRECT_SSL_CLIENT_S_DN (Subject DN)
+  REDIRECT_SSL_CLIENT_I_DN (Issuer DN)
+
+OR
+
+  HTTP_REDIRECT_SSL_CLIENT_S_DN (Subject DN)
+  HTTP_REDIRECT_SSL_CLIENT_I_DN (Issuer DN)
+  
+
+== Install and use
+
+=== 1. Install the authlogic_x509 plugin
+
+  $ script/plugin install git://github.com/auth-scc/authlogic_x509.git
+
+=== 2. Create the login and mapping methods at your User class
+
+Add in your User class something like this:
+
+  class User < ActiveRecord::Base
+
+    ...
+    def self.find_by_x509_login(x509_subject_dn, x509_issuer_dn)
+      X509Login.where(:subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn).first && X509Login.where(:subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn).first.user
+    end
+
+    def self.map_x509_login(x509_subject_dn, x509_issuer_dn)
+      dn = X509Login.where(:subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn).first || X509Login.new(:subject_dn => x509_subject_dn, :issuer_dn => x509_issuer_dn)
+      dn.owner = self
+      dn.save
+    end
+    ...
+
+  end
