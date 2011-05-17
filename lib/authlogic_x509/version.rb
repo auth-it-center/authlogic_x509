@@ -40,8 +40,8 @@ module AuthlogicX509
     end
 
     MAJOR = 0
-    MINOR = 0
-    TINY  = 2
+    MINOR = 1
+    TINY  = 0
 
     # The current version as a Version instance
     CURRENT = new(MAJOR, MINOR, TINY)
