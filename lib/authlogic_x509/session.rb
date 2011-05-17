@@ -9,20 +9,6 @@ module AuthlogicX509
     end
     
     module Config
-      # Once X509 authentication has succeeded we need to find the user in the database. By default this just calls the
-      # find_by_x509_subject_dn method provided by ActiveRecord. If you have a more advanced set up and need to find users
-      # differently specify your own method and define your logic in there.
-      #
-      # For example, if you allow users to store multiple x509 subject DNs with their account, you might do something like:
-      #
-      #   class User < ActiveRecord::Base
-      #     def self.find_by_x509_subject_dn(login)
-      #       first(:conditions => ["#{X509Login.table_name}.login = ?", login], :join => :x509_logins)
-      #     end
-      #   end
-      #
-      # * <tt>Default:</tt> :find_by_x509_subject_dn
-      # * <tt>Accepts:</tt> Symbol
   		def find_by_x509_login_method(value = nil)
   				rw_config(:find_by_x509_login_method, value, :find_by_x509_login)
   		end
@@ -60,7 +46,7 @@ module AuthlogicX509
         if self.x509_subject_dn && self.x509_issuer_dn
           attempted_record.send(x509_mapping_method, x509_subject_dn, x509_issuer_dn)
         else
-          errors.add_to_base("Subject DN or Issuer DN not found")
+          errors.add_to_base(I18n.t('error_messages.x509_login_subject_or_issuer_not_found', :default => "Subject DN or Issuer DN not found"))
         end
         return {:subject_dn=>x509_subject_dn, :issuer_dn=>x509_issuer_dn}
       end
@@ -71,7 +57,19 @@ module AuthlogicX509
         end
 
         def validate_by_x509
-
+          get_distinguished_names
+          if self.x509_subject_dn && self.x509_issuer_dn
+            self.attempted_record = klass.send(find_by_x509_login_method, x509_subject_dn, x509_issuer_dn)
+            errors.add(:x509_login, I18n.t('error_messages.x509_login_record_does_not_exist', :default => "Record does not exist")) if attempted_record.blank?
+            return false
+          else
+            errors.add_to_base(I18n.t('error_messages.x509_login_subject_or_issuer_not_found', :default => "Subject DN or Issuer DN not found"))
+            return false
+          end
+          return true
+        end
+        
+        def get_distinguished_names
           if controller.local_request?
             self.x509_subject_dn = "/CN=Local Request"
             self.x509_issuer_dn = "/CN=Local Issuer"
@@ -84,13 +82,6 @@ module AuthlogicX509
           elsif controller.request.env['HTTP_REDIRECT_SSL_CLIENT_S_DN'] =~ /CN/
             self.x509_subject_dn = controller.request.env['HTTP_REDIRECT_SSL_CLIENT_S_DN']
             self.x509_issuer_dn = controller.request.env['HTTP_REDIRECT_SSL_CLIENT_I_DN']
-          end
-          
-          if self.x509_subject_dn && self.x509_issuer_dn
-            self.attempted_record = klass.send(find_by_x509_login_method, x509_subject_dn, x509_issuer_dn)
-            errors.add(:x509_login, I18n.t('error_messages.x509_login_not_found', :default => "does not exist")) if attempted_record.blank?
-          else
-            errors.add_to_base("Subject DN not found")
           end
         end
         
