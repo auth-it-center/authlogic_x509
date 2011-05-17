@@ -27,6 +27,11 @@ module AuthlogicX509
   				rw_config(:find_by_x509_login_method, value, :find_by_x509_login)
   		end
   		alias_method :find_by_x509_login_method=, :find_by_x509_login_method
+
+  		def x509_mapping_method(value = nil)
+  				rw_config(:x509_mapping_method, value, :map_x509_login)
+  		end  		
+  		alias_method :x509_mapping_method=, :x509_mapping_method
   			
     end
     
@@ -48,6 +53,16 @@ module AuthlogicX509
         if !hash.nil?
           self.x509_login = hash[:x509_login] if hash.key?(:x509_login)
         end
+      end
+      
+      def x509_map
+        get_distinguished_names
+        if self.x509_subject_dn && self.x509_issuer_dn
+          attempted_record.send(x509_mapping_method, x509_subject_dn, x509_issuer_dn)
+        else
+          errors.add_to_base("Subject DN or Issuer DN not found")
+        end
+        return {:subject_dn=>x509_subject_dn, :issuer_dn=>x509_issuer_dn}
       end
 
       private
@@ -81,6 +96,10 @@ module AuthlogicX509
         
         def find_by_x509_login_method
   				self.class.find_by_x509_login_method
+  			end
+
+        def x509_mapping_method
+  				self.class.x509_mapping_method
   			end
   			
   			def x509_subject_dn
